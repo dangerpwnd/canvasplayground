@@ -1,7 +1,16 @@
 // The state of the game
 let state = {};
 
-// ...
+//Left info panel
+const angle1DOM = document.querySelector("#info-left .angle");
+const velocity1DOM = document.querySelector("#info-left .velocity");
+
+//Right info panel
+const angle2DOM = document.querySelector("#info-right .angle");
+const velocity2DOM = document.querySelector("#info-right .velocity");
+
+// Bomb's grab area
+const bombGrabAreaDOM = document.getElementById("bomb-grab-area");
 
 // The main canvas element and its drawing context
 const canvas = document.getElementById("game");
@@ -130,6 +139,13 @@ function initializeBombPosition() {
   state.bomb.y = gorillaY + gorillaHandOffsetY;
   state.bomb.velocity.x = 0;
   state.bomb.velocity.y = 0;
+
+  // Initialize the position of the grab area in HTML
+  const grabAreaRadius = 15;
+  const left = state.bomb.x * state.scale - grabAreaRadius;
+  const bottom = state.bomb.y * state.scale - grabAreaRadius;
+  bombGrabAreaDOM.style.left = `${left}px`;
+  bombGrabAreaDOM.style.bottom = `${bottom}px`;
 }
 
 function draw() {
