@@ -1,17 +1,22 @@
-let state = {}; // State of the game
+// The state of the game
+let state = {};
 
-// Main canvas element
+// ...
+
+// The main canvas element and its drawing context
 const canvas = document.getElementById("game");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 const ctx = canvas.getContext("2d");
 
+// ...
+
 newGame();
 
 function newGame() {
-  // Reset state
+  // Reset game state
   state = {
-    phase: "aiming", // aiming, in flight, celebrating
+    phase: "aiming", // aiming | in flight | celebrating
     currentPlayer: 1,
     bomb: {
       x: undefined,
@@ -20,24 +25,34 @@ function newGame() {
       velocity: { x: 0, y: 0 },
     },
 
-    // Setting
+    // Buildings
     backgroundBuildings: [],
     buildings: [],
-    blastholes: [],
+    blastHoles: [],
+
+    // ...
   };
 
+  // Generate background buildings
   for (let i = 0; i < 11; i++) {
-    generateBackgroundBuildings(i);
+    generateBackgroundBuilding(i);
   }
 
+  // Generate buildings
   for (let i = 0; i < 8; i++) {
     generateBuilding(i);
   }
+
+  // ...
+
+  initializeBombPosition();
+
+  // ...
+
+  draw();
 }
 
-draw();
-
-function generateBackgroundBuildings(index) {
+function generateBackgroundBuilding(index) {
   const previousBuilding = state.backgroundBuildings[index - 1];
 
   const x = previousBuilding
@@ -56,7 +71,7 @@ function generateBackgroundBuildings(index) {
 }
 
 function generateBuilding(index) {
-  const previousBuilding = state.backgroundBuildings[index - 1];
+  const previousBuilding = state.buildings[index - 1];
 
   const x = previousBuilding
     ? previousBuilding.x + previousBuilding.width + 4
@@ -77,20 +92,25 @@ function generateBuilding(index) {
     ? minHeightGorilla + Math.random() * (maxHeightGorilla - minHeightGorilla)
     : minHeight + Math.random() * (maxHeight - minHeight);
 
+  // Generate an array of booleans to show if the light is on or off in a room
   const lightsOn = [];
   for (let i = 0; i < 50; i++) {
     const light = Math.random() <= 0.33 ? true : false;
     lightsOn.push(light);
   }
 
-  state.backgroundBuildings.push({ x, width, height, lightsOn });
+  state.buildings.push({ x, width, height, lightsOn });
+}
+
+function initializeBombPosition() {
+  // ...
 }
 
 function draw() {
   ctx.save();
 
-  //Flip coordinate system upside down allowing y-axis to increase upwards
-  ctx.translate(0, canvas.innerHeight);
+  // Flip coordinate system upside down
+  ctx.translate(0, window.innerHeight);
   ctx.scale(1, -1);
 
   // Draw scene
@@ -101,20 +121,20 @@ function draw() {
   drawGorilla(2);
   drawBomb();
 
-  //Restore transformation
+  // Restore transformation
   ctx.restore();
 }
 
 function drawBackground() {
-  const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  const gradient = ctx.createLinearGradient(0, 0, 0, window.innerHeight);
   gradient.addColorStop(1, "#F8BA85");
   gradient.addColorStop(0, "#FFC28E");
 
   // Draw sky
   ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, canvas.innerWidth, canvas.innerHeight);
+  ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
 
-  // Draw sun/moon
+  // Draw moon
   ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
   ctx.beginPath();
   ctx.arc(300, 350, 60, 0, 2 * Math.PI);
@@ -130,6 +150,7 @@ function drawBackgroundBuildings() {
 
 function drawBuildings() {
   state.buildings.forEach((building) => {
+    // Draw building
     ctx.fillStyle = "#4A3C68";
     ctx.fillRect(building.x, 0, building.width, building.height);
 
@@ -141,7 +162,6 @@ function drawBuildings() {
     const numberOfFloors = Math.ceil(
       (building.height - gap) / (windowHeight + gap)
     );
-
     const numberOfRoomsPerFloor = Math.floor(
       (building.width - gap) / (windowWidth + gap)
     );
@@ -151,7 +171,7 @@ function drawBuildings() {
         if (building.lightsOn[floor * numberOfRoomsPerFloor + room]) {
           ctx.save();
 
-          ctx.translate(building.x + gap, buidling.height - gap);
+          ctx.translate(building.x + gap, building.height - gap);
           ctx.scale(1, -1);
 
           const x = room * (windowWidth + gap);
@@ -170,13 +190,13 @@ function drawBuildings() {
 function drawGorilla(player) {
   ctx.save();
 
-  // Determine which building the gorilla is on
   const building =
-    player === 1 ? state.buildings.at(1) : state.buildings.at(-2);
+    player === 1
+      ? state.buildings.at(1) // Second building
+      : state.buildings.at(-2); // Second last building
 
   ctx.translate(building.x + building.width / 2, building.height);
 
-  // draw Gorilla
   drawGorillaBody();
   drawGorillaLeftArm(player);
   drawGorillaRightArm(player);
@@ -186,7 +206,7 @@ function drawGorilla(player) {
 }
 
 function drawGorillaBody() {
-  ctx.fillStyle = "#000000";
+  ctx.fillStyle = "black";
 
   ctx.beginPath();
   ctx.moveTo(0, 15);
@@ -207,7 +227,7 @@ function drawGorillaBody() {
 }
 
 function drawGorillaLeftArm(player) {
-  ctx.strokeStyle = "#000000";
+  ctx.strokeStyle = "black";
   ctx.lineWidth = 18;
 
   ctx.beginPath();
@@ -225,19 +245,40 @@ function drawGorillaLeftArm(player) {
 }
 
 function drawGorillaRightArm(player) {
-  ctx.strokeStyle = "#000000";
+  ctx.strokeStyle = "black";
   ctx.lineWidth = 18;
 
   ctx.beginPath();
-  ctx.moveTo(-14, 50);
+  ctx.moveTo(+14, 50);
 
   if (state.phase === "aiming" && state.currentPlayer === 2 && player === 2) {
-    ctx.quadraticCurveTo(44, 63, 28, 107);
+    ctx.quadraticCurveTo(+44, 63, +28, 107);
   } else if (state.phase === "celebrating" && state.currentPlayer === player) {
-    ctx.quadraticCurveTo(44, 63, 28, 107);
+    ctx.quadraticCurveTo(+44, 63, +28, 107);
   } else {
-    ctx.quadraticCurveTo(44, 45, 28, 12);
+    ctx.quadraticCurveTo(+44, 45, +28, 12);
   }
 
   ctx.stroke();
 }
+
+function drawGorillaFace(player) {
+  // ...
+}
+
+function drawBomb() {
+  //...
+}
+
+// Event handlers
+// ...
+
+function throwBomb() {
+  // ...
+}
+
+function animate(timestamp) {
+  // ...
+}
+
+// ...
