@@ -30,7 +30,7 @@ function newGame() {
     buildings: [],
     blastHoles: [],
 
-    // ...
+    scale: 1,
   };
 
   // Generate background buildings
@@ -43,8 +43,7 @@ function newGame() {
     generateBuilding(i);
   }
 
-  // ...
-
+  calculateScale();
   initializeBombPosition();
 
   // ...
@@ -102,8 +101,35 @@ function generateBuilding(index) {
   state.buildings.push({ x, width, height, lightsOn });
 }
 
+function calculateScale() {
+  const lastBuilding = state.buildings.at(-1);
+  const totalWidthOfTheCity = lastBuilding.x + lastBuilding.width;
+
+  state.scale = window.innerWidth / totalWidthOfTheCity;
+}
+
+window.addEventListener("resize", () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  calculateScale();
+  initializeBombPosition();
+  draw();
+});
+
 function initializeBombPosition() {
-  // ...
+  const building =
+    state.currentPlayer === 1 ? state.buildings.at(1) : state.buildings.at(-2);
+
+  const gorillaX = building.x + building.width / 2;
+  const gorillaY = building.height;
+
+  const gorillaHandOffsetX = state.currentPlayer === 1 ? -28 : 28;
+  const gorillaHandOffsetY = 107;
+
+  state.bomb.x = gorillaX + gorillaHandOffsetX;
+  state.bomb.y = gorillaY + gorillaHandOffsetY;
+  state.bomb.velocity.x = 0;
+  state.bomb.velocity.y = 0;
 }
 
 function draw() {
@@ -112,6 +138,7 @@ function draw() {
   // Flip coordinate system upside down
   ctx.translate(0, window.innerHeight);
   ctx.scale(1, -1);
+  ctx.scale(state.scale, state.scale);
 
   // Draw scene
   drawBackground();
@@ -126,13 +153,23 @@ function draw() {
 }
 
 function drawBackground() {
-  const gradient = ctx.createLinearGradient(0, 0, 0, window.innerHeight);
+  const gradient = ctx.createLinearGradient(
+    0,
+    0,
+    0,
+    window.innerHeight / state.scale
+  );
   gradient.addColorStop(1, "#F8BA85");
   gradient.addColorStop(0, "#FFC28E");
 
   // Draw sky
   ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+  ctx.fillRect(
+    0,
+    0,
+    window.innerWidth / state.scale,
+    window.innerHeight / state.scale
+  );
 
   // Draw moon
   ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
@@ -263,11 +300,59 @@ function drawGorillaRightArm(player) {
 }
 
 function drawGorillaFace(player) {
-  // ...
+  // Face
+  ctx.fillStyle = "lightgray";
+  ctx.beginPath();
+  ctx.arc(0, 63, 9, 0, 2 * Math.PI);
+  ctx.moveTo(-3.5, 70);
+  ctx.arc(-3.5, 70, 4, 0, 2 * Math.PI);
+  ctx.moveTo(+3.5, 70);
+  ctx.arc(+3.5, 70, 4, 0, 2 * Math.PI);
+  ctx.fill();
+
+  // Eyes
+  ctx.fillStyle = "black";
+  ctx.beginPath();
+  ctx.arc(-3.5, 70, 1.4, 0, 2 * Math.PI);
+  ctx.moveTo(+3.5, 70);
+  ctx.arc(+3.5, 70, 1.4, 0, 2 * Math.PI);
+  ctx.fill();
+
+  ctx.strokeStyle = "black";
+  ctx.lineWidth = 1.4;
+
+  // Nose
+  ctx.beginPath();
+  ctx.moveTo(-3.5, 66.5);
+  ctx.lineTo(-1.5, 65);
+  ctx.moveTo(3.5, 66.5);
+  ctx.lineTo(1.5, 65);
+  ctx.stroke();
+
+  // Mouth
+  ctx.beginPath();
+  if (state.phase === "celebrating" && state.currentPlayer === player) {
+    ctx.moveTo(-5, 60);
+    ctx.quadraticCurveTo(0, 56, 5, 60);
+  } else {
+    ctx.moveTo(-5, 56);
+    ctx.quadraticCurveTo(0, 60, 5, 56);
+  }
+  ctx.stroke();
 }
 
 function drawBomb() {
-  //...
+  ctx.save();
+  ctx.translate(state.bomb.x, state.bomb.y);
+
+  // Draw circle
+  ctx.fillStyle = "white";
+  ctx.beginPath();
+  ctx.arc(0, 0, 6, 0, 2 * Math.PI);
+  ctx.fill();
+
+  // Restore transformation
+  ctx.restore();
 }
 
 // Event handlers
